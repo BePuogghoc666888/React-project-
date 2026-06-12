@@ -29,6 +29,9 @@ export default function Layout() {
             <NavLink to="/cart" className={activeClass}>
               <ShoppingCart size={18} /> Giỏ hàng
             </NavLink>
+            <NavLink to="/Chsimple" className={activeClass}>
+              <Package size={18} /> Custom hook
+            </NavLink>
           </nav>
         </div>
       </header>

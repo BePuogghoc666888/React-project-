@@ -9,6 +9,8 @@ import App from "../App";
 import cartData from "../data/cart.json";
 import produceData from "../data/Produce.json";
 import Produce from "../pages/Produce";
+import Chsimple from "../on/custom_hook/Chsimple";
+
 
 import Cart from "../pages/Cart";
 import CartDetail from "../pages/CartDetail";
@@ -130,6 +132,10 @@ export const router = createBrowserRouter([
             },
           },
         ],
+      },
+      {
+        path: "Chsimple",
+        element: <Chsimple />,
       },
     ],
   },
