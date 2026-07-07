@@ -1,249 +1,414 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import { useForm } from "react-hook-form";
+
+import "swiper/css";
+import "swiper/css/pagination";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
+import PhoneMockup from "../on/PhoneMockup";
+import fullData from "../data/test.json";
+// import section from "../pages/section";
 
 const Test = () => {
   const [openId, setOpenId] = useState(null);
 
-  const listData = [
-    {
-      id: "item-1",
-      title: "Tiêu đề Item 1",
-      content: "Nội dung chi tiết của item số 1.",
-    },
-    {
-      id: "item-2",
-      title: "Tiêu đề Item 2",
-      content: "Nội dung chi tiết của item số 2.",
-    },
-    {
-      id: "item-3",
-      title: "Tiêu đề Item 3",
-      content: "Nội dung chi tiết của item số 3. Nội dung dài...",
-    },
-  ];
+  const swiperRef = useRef(null);
 
-  const nvien = [
-    {
-      id: "01",
-      avt: "https://api.dicebear.com/7.x/avataaars/svg?seed=A",
-      name: "Lê Thảo Nhi",
-      major: "Travel Blogger",
-      contentCV:
-        "SIM Local giúp tôi kết nối dễ dàng khi đi du lịch nước ngoài. Dịch vụ nhanh chóng, tiện lợi, phủ sóng rộng.",
-      start: 5,
+  const [activeIndex, setActiveIndex] = useState(0); // Lưu vị trí slide đang hiển thị
+
+  const handleResetForm = () => resizeTo();
+  // btn, xoá, chỉnh sửa, gửi thông báo (chưa cần)
+  // đang soạn, đã xoá, gần nhất ( khi nhấn vào sẽ trả về cái gần nhất, đọc hiểu k code )
+  // kiểu hiển thị, boolaen 
+  // nội dung, B T i U trái giữa phải 
+  // hình ảnh 
+  // btn, nút hàng động, selection, xem chi tiết 
+  // link điều hướng, giữ nguyên
+  // chọn đối tượng, 4 d.tượng 
+
+  // Khởi tạo React Hook Form với các giá trị mặc định giống như ảnh thiết kế
+  const { register, handleSubmit, watch } = useForm({
+    defaultValues: {
+      displayType: "all",
+      title: "Chương trình khuyến mãi tháng 6/2026",
+      content: `Chương trình khuyến mãi tháng 6 năm 2026 đã chính thức bắt đầu! Chúng tôi rất vui mừng thông báo rằng tất cả các sản phẩm trong cửa hàng sẽ được giảm giá 20%, bao gồm cả những mẫu mới nhất vừa ra mắt.\n\n💖 Đây là cơ hội tuyệt vời để bạn sở hữu những sản phẩm yêu thích với mức giá ưu đãi. Đặc biệt, nếu...`,
+      actionBtn: "Xem chi tiết",
+      redirectLink: "mylocal.vn",
     },
-    {
-      id: "02",
-      avt: "https://api.dicebear.com/7.x/avataaars/svg?seed=B",
-      name: "Trần Văn Nam",
-      major: "Kỹ sư phần mềm",
-      contentCV:
-        "Với SIM Local, tôi không còn phải lo lắng về việc chuyển đổi SIM hay chi phí roaming đắt đỏ mỗi khi đến một quốc gia mới. SIM Local cung cấp nhiều gói cước linh hoạt...",
-      start: 5,
-    },
-    {
-      id: "03",
-      avt: "https://api.dicebear.com/7.x/avataaars/svg?seed=C",
-      name: "Đặng Hoàng Minh",
-      major: "Hướng dẫn viên du lịch",
-      contentCV:
-        "SIM Local là người bạn đồng hành không thể thiếu trong mỗi chuyến đi của tôi. Rất tiện lợi và đáng tin cậy.",
-      start: 5,
-    },
-  ];
+  });
+
+  // Lắng nghe tất cả các ô nhập liệu real-time để truyền xuống hai điện thoại
+  const watchType = watch("displayType");
+  const watchTitle = watch("title");
+  const watchContent = watch("content");
+  const watchActionBtn = watch("actionBtn");
+  const watchRedirectLink = watch("redirectLink");
+
+  const onSubmit = (data) =>
+    console.log("Dữ liệu gửi lên dữ liệu hệ thống:", data);
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6 space-y-12">
-      {/* SECTION 1: ACCORDION (ẨN HIỆN) */}
-      <div className="space-y-4">
-        {listData.map((item) => {
-          const isOpen = openId === item.id;
-          return (
-            <div
-              key={item.id}
-              className={`rounded-xl border transition-all duration-300 overflow-hidden ${
-                isOpen ? "border-red-500 shadow-sm" : "border-gray-200"
-              }`}
-            >
-              <button
-                onClick={() => setOpenId(isOpen ? null : item.id)}
-                className={`w-full p-6 text-left flex items-center justify-between cursor-pointer ${
-                  isOpen ? "bg-[#F6F7FA]" : "bg-white"
-                }`}
-              >
-                <div className="text-base font-semibold text-gray-800">
-                  {item.title}
-                </div>
-                <div className="text-gray-500 text-sm flex items-center justify-center w-5 h-5">
-                  {isOpen ? <MinusOutlined /> : <PlusOutlined />}
-                </div>
-              </button>
-
+    <>
+      <div className=" max-w-7xl mx-auto p-6  space-y-12">
+        {/* SECTION 1: ACCORDION (ẨN HIỆN) */}
+        <div className="space-y-4">
+          {fullData.listData.map((item) => {
+            const isOpen = openId === item.id;
+            return (
               <div
-                className={`grid transition-all duration-300 ease-out ${
-                  isOpen
-                    ? "grid-rows-[1fr] opacity-100"
-                    : "grid-rows-[0fr] opacity-0"
+                key={item.id}
+                className={`rounded-xl border transition-all duration-300 overflow-hidden ${
+                  isOpen ? "border-red-500 shadow-sm" : "border-gray-200"
                 }`}
               >
-                <div className="overflow-hidden">
-                  <div className="px-6 pb-6 text-gray-700">
-                    <p className="text-sm leading-relaxed text-gray-500">
-                      <strong className="text-red-500 font-bold">
-                        Phần in đậm quan trọng: {item.content}
-                      </strong>
-                    </p>
+                <button
+                  onClick={() => setOpenId(isOpen ? null : item.id)}
+                  className={`w-full p-6 text-left flex items-center justify-between cursor-pointer ${
+                    isOpen ? "bg-[#F6F7FA]" : "bg-white"
+                  }`}
+                >
+                  <div className="text-base font-semibold text-gray-800">
+                    {item.title}
+                  </div>
+                  <div className="text-gray-500 text-sm flex items-center justify-center w-5 h-5">
+                    {isOpen ? <MinusOutlined /> : <PlusOutlined />}
+                  </div>
+                </button>
+
+                <div
+                  className={`grid transition-all duration-300 ease-out ${
+                    isOpen
+                      ? "grid-rows-[1fr] opacity-100"
+                      : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-6 text-gray-700">
+                      <p className="text-sm leading-relaxed text-gray-500">
+                        <strong className="text-red-500 font-bold">
+                          Phần in đậm quan trọng: {item.content}
+                        </strong>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="bg-[#2A72F4] rounded-[32px] p-8 md:p-12 flex flex-col lg:flex-row gap-8 items-center overflow-visible relative">
-        <div className="w-full lg:w-[30%] flex flex-col justify-between text-white ">
-          <div className="space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-              Khách hàng nói về Local Travel
-            </h2>
-            <p className="text-white/80 text-sm leading-relaxed">
-              Xem thử những chia sẻ chân thật nhất từ khách hàng đã trải nghiệm
-              Local Travel!
-            </p>
-          </div>
-
-          <div className="mt-6 hidden lg:block w-32 h-32 relative">
-            <div className="absolute inset-0 bg-white/10 rounded-2xl flex items-center justify-center text-4xl">
-              ⭐⭐⭐
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        <div className=" flex flex-none gap-6 pb-4 ">
-          {nvien.map((nv) => (
-            <div
-              key={nv.id}
-              className="flex w-[220px] bg-white rounded-2xl p-6 flex flex-col justify-between "
-            >
-              <div>
-                <div className="flex  items-center gap-3 mb-4">
-                  <img
-                    className="w-10 h-10  bg-gray-100 "
-                    src={nv.avt}
-                    alt={nv.name}
-                  />
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-sm ">
-                      {nv.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 font-medium">
-                      {nv.major}
-                    </p>
-                  </div>
-                </div>
+        <div
+          className="bg-[#2A72F4] rounded-[32px] p-8 md:p-12 flex flex-col 
+            lg:flex-row gap-8 items-center overflow-visible  relative
+            w-full max-w-[1320px]  mx-auto min-h-[727px]
+          "
+        >
+          <div className=" lg:w-[20%] flex flex-col justify-between text-white ">
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-4xl font-bold  leading-tight">
+                Khách hàng nói về Local Travel
+              </h2>
+              <p className="text-white/80 text-dm leading-relaxed">
+                Xem thử những chia sẻ chân thật nhất từ khách hàng đã trải
+                nghiệm Local Travel!
+              </p>
+            </div>
 
-                <div className=" h-[80px] overflow-y-auto text-gray-600 text-sm mb-4 ">
-                  {nv.contentCV}
-                </div>
+            <div className="mt-6 w-32 h-32 relative">
+              <div className="absolute inset-0 bg-white/10 rounded-2xl flex items-center justify-center text-4xl">
+                ⭐⭐⭐
               </div>
+            </div>
+          </div>
 
-              <div className="flex gap-1 text-amber-400 text-base">
-                {Array.from({ length: Number(nv.start) }).map((_, index) => (
-                  <span key={index}>★</span>
+          <div className="flex-1 w-full overflow-hidden -mr-[9999px] pr-[9999px] ">
+            <div className=" w-[220px] flex flex-row gap-6 pb-4 overflow-visible ">
+              <Swiper
+                spaceBetween={24}
+                slidesPerView="auto"
+                modules={[Pagination]}
+                onBeforeInit={(swiper) => {
+                  swiperRef.current = swiper;
+                }} // lưu quyền điều khiển
+                onSlideChange={(swiper) => {
+                  setActiveIndex(swiper.activeIndex);
+                }} // cập nhật vị trí slide mới
+                className="w-full  !overflow-visible"
+              >
+                {fullData.nvien.map((nv) => (
+                  <SwiperSlide key={nv.id} className="flex !w-[240px] ">
+                    <div className=" bg-amber-200 rounded-2xl p-6 flex flex-col  ">
+                      <div>
+                        <div className="flex items-center gap-1 mb-2">
+                          <div>
+                            <p className="font-bold text-gray-900 text-[10px]  ">
+                              {nv.name}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-medium">
+                              {nv.major}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className=" h-[80px] w-[160px] overflow-x-auto scrollbar-none text-gray-600 text-xs mb-2 ">
+                          {nv.contentCV}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1 text-amber-400 text-base">
+                        {Array.from({ length: Number(nv.start) }).map(
+                          (_, index) => (
+                            <span key={index}>★</span>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </SwiperSlide>
                 ))}
+              </Swiper>
+            </div>
+          </div>
+
+          <div className="absolute bottom-1 right-8 flex flex-row flex-wrap items-center gap-6">
+            <div className="absolute bottom-6 right-8 flex justify-between flex-row items-center gap-6 z-10">
+              <div className="flex gap-1.5 ">
+                {fullData.nvien.map((item, index) => {
+                  const isActive = activeIndex === index;
+                  return (
+                    <span
+                      key={item.id}
+                      onClick={() => swiperRef.current?.slideTo(index)}
+                      className={`     rounded-full bg-white transition-all duration-300 ${
+                        isActive ? "w-4" : "w-1.5 bg-white/40"
+                      } h-1.5`}
+                    ></span>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => swiperRef.current?.slidePrev()}
+                  className="w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-colors text-sm"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => swiperRef.current?.slideNext()}
+                  className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 text-[#2A72F4] flex items-center justify-center transition-colors shadow text-sm font-bold"
+                >
+                  →
+                </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        <div className="absolute bottom-6 right-8 flex items-center gap-6">
-          <div className="flex gap-1.5 items-center">
-            <span className="w-4 h-1.5 rounded-full bg-white"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
-          </div>
+        <div className="w-full max-w-[1320px] min-h-[727px] mx-auto min-h-screen bg-gray-100 p-2 md:p-6 flex flex-col gap-6">
+          <h2 className="text-xl font-bold text-gray-800">Kênh hiển thị</h2>
 
-          <div className="flex gap-2">
-            <button className="w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-colors text-sm">
-              ←
-            </button>
-            <button className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 text-[#2A72F4] flex items-center justify-center transition-colors shadow text-sm font-bold">
-              →
-            </button>
-          </div>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="w-full max-w-[1256px] min-h-[703px] mx-auto p-4 flex flex-col gap-4 bg-gray-200 rounded-lg shadow-sm"
+          >
+            {/* KHUNG CHỨA NỘI DUNG CHÍNH */}
+            <div className="w-full flex-1 flex flex-col lg:flex-row gap-6 bg-white p-6 rounded-xl border">
+              {/* BÊN TRÁI: Khung chứa 2 điện thoại xem trước */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-bold text-gray-800">
+                  Bản xem trước
+                </h3>
+
+                {/* Điều chỉnh độ rộng w-[380px] để chứa vừa vặn 2 điện thoại nằm ngang thoải mái */}
+                <div className="w-[380px] h-[518px] bg-white border border-blue-400 rounded-lg p-4 flex items-center justify-center shrink-0">
+                  <div className="flex gap-3 justify-center items-center w-full">
+                    {/* Điện thoại 1 - Xem trước ngoài màn hình khóa */}
+                    <PhoneMockup
+                      device="iphone-16"
+                      title={watchTitle}
+                      content={watchContent}
+                    />
+
+                    {/* Điện thoại 2 - Xem trước chi tiết trong ứng dụng (Nhận thêm text nút hành động và loại hiển thị) */}
+                    <PhoneMockup
+                      isPreview={false}
+                      device="iphone-16"
+                      title={watchTitle}
+                      content={watchContent}
+                      actionText={watchActionBtn}
+                      displayType={watchType}
+                      hasAction={true}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* BÊN PHẢI: Khối cấu hình điền nội dung */}
+              <div className="flex-1 flex flex-col gap-4">
+                {/* Header cài đặt */}
+                <div className="flex justify-between items-center w-full">
+                  <h3 className="text-sm font-bold text-gray-800">
+                    Cài đặt nội dung
+                  </h3>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 text-xs border rounded-md text-red-400 bg-red-50/50"
+                    >
+                      Dán nội dung
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 text-xs border rounded-md text-red-500 bg-white shadow-sm font-medium"
+                    >
+                      Sao chép nội dung
+                    </button>
+                  </div>
+                </div>
+
+                {/* Kiểu hiển thị (Radio Buttons) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-700 text-left">
+                    Kiểu hiển thị
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label
+                      className={`border rounded-xl p-3 flex items-center gap-2 cursor-pointer transition-all ${watchType === "type1" ? "border-red-400 bg-white" : "border-gray-200 bg-gray-50/50"}`}
+                    >
+                      <input
+                        type="radio"
+                        value="type1"
+                        {...register("displayType")}
+                        className="accent-red-500"
+                      />
+                      <span
+                        className={`text-xs font-medium ${watchType === "type1" ? "text-gray-700" : "text-gray-400"}`}
+                      >
+                        Nội dung & Hình ảnh
+                      </span>
+                    </label>
+                    <label
+                      className={`border rounded-xl p-3 flex items-center gap-2 cursor-pointer transition-all ${watchType === "type2" ? "border-red-400 bg-white" : "border-gray-200 bg-gray-50/50"}`}
+                    >
+                      <input
+                        type="radio"
+                        value="type2"
+                        {...register("displayType")}
+                        className="accent-red-500"
+                      />
+                      <span
+                        className={`text-xs font-medium ${watchType === "type2" ? "text-gray-700" : "text-gray-400"}`}
+                      >
+                        Chỉ nội dung
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Nhập tiêu đề thông báo */}
+                <div className="flex flex-col justify-end">
+                  <label className="text-xs font-semibold text-left  text-gray-700 mb-1">
+                    Tiêu đề thông báo *
+                  </label>
+                  <input
+                    type="text"
+                    {...register("title")}
+                    placeholder="Nhập tiêu đề..."
+                    className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
+                  />
+                </div>
+
+                {/* Ô soạn thảo Nội dung & Khung tải ảnh */}
+                <div className="grid grid-cols-2 gap-4 h-[240px]">
+                  <div className="flex flex-col h-full">
+                    <label className="text-xs font-semibold text-gray-700 mb-1 text-left">
+                      Nội dung *
+                    </label>
+                    <textarea
+                      {...register("content")}
+                      placeholder="Nhập nội dung thông báo tại đây..."
+                      className="w-full h-full border rounded-lg p-3 bg-white shadow-sm text-xs text-gray-700 resize-none outline-none focus:border-red-400"
+                    />
+                  </div>
+
+                  {/* Tải hình ảnh (Sẽ ẩn mờ đi hoặc ẩn hẳn nếu chọn chế độ "Chỉ nội dung") */}
+                  <div className="flex flex-col h-full transition-opacity duration-300">
+                    <label className="text-xs  text-left font-semibold text-gray-700 mb-1">
+                      Hình ảnh *
+                    </label>
+                    <div
+                      className={`w-full h-full border border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center p-4 text-center ${watchType === "type2" ? "bg-gray-100 opacity-50 pointer-events-none" : "bg-white"}`}
+                    >
+                      <span className="text-xs text-gray-400">
+                        Chọn tệp hoặc kéo thả vào đây
+                      </span>
+                      <button
+                        type="button"
+                        className="mt-2 px-4 py-1.5 bg-red-500 text-white rounded-full text-xs font-medium shadow-sm"
+                      >
+                        Tải tệp lên
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Khu vực cấu hình Nút hành động & Link điều hướng */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col">
+                    <button className="radio"></button>
+                    <label className="text-xs font-semibold text-gray-700  text-left mb-1">
+                      Nút hành động
+                    </label>
+                    <input
+                      type="text"
+                      {...register("actionBtn")}
+                      placeholder="Ví dụ: Xem chi tiết, Nhận quà..."
+                      className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold  text-left text-gray-700 mb-1">
+                      Link điều hướng
+                    </label>
+                    <input
+                      type="text"
+                      {...register("redirectLink")}
+                      placeholder="Nhập đường dẫn liên kết (Ví dụ: )..."
+                      className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FOOTER: Nút điều hướng biểu mẫu */}
+            <div className="w-full border-t pt-3 flex justify-between items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+              <button
+                type="button"
+                className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600 bg-gray-50"
+              >
+                Quay lại
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600"
+                >
+                  Lưu nháp
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-medium shadow-sm"
+                >
+                  Tiếp theo &rarr;
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
-      <h1>sss</h1>
-      {/* <!-- KHUNG LỚN MÀU XANH: Bỏ 'overflow-hidden' để thẻ được phép tràn tự nhiên ra ngoài --> */}
-      <div class="bg-blue-600 rounded-3xl p-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-        {/* <!-- KHỐI TRÁI: Tiêu đề --> */}
-        <div class="flex flex-col text-white">
-          <h2 class="text-2xl font-bold mb-2">
-            Khách hàng nói về Local Travel
-          </h2>
-        </div>
-
-        {/* <!-- KHỐI PHẢI: Vùng chứa các thẻ -->
-  <!-- Bỏ 'overflow-x-auto' đi để các thẻ thoải mái tràn tự do ra ngoài khung xanh --> */}
-        <div class=" flex gap-4 w-[1200px]">
-          {/* <!-- THẺ REVIEW 1 --> */}
-          <div class="w-72 h-64 bg-white rounded-2xl p-6 flex flex-col justify-between shadow-lg">
-            {/* <!-- Header thẻ --> */}
-            <div class="flex items-center gap-3 mb-3">
-              <img class="w-10 h-10 rounded-full" src="avatar.jpg" alt="User" />
-              <span class="font-bold text-gray-800 text-sm">Lê Thảo Nhi</span>
-            </div>
-
-            {/* <!-- NỘI DUNG CHỮ TRƯỢT LÊN XUỐNG -->
-      <!-- h-28: Cố định chiều cao vùng chữ -->
-      <!-- overflow-y-auto: Chữ dài quá tự sinh thanh cuộn dọc (lướt lên xuống) --> */}
-            <div class="h-28 overflow-y-auto pr-1 text-gray-600 text-xs leading-relaxed mb-3">
-              Chữ rất dài ở đây... Cuộn xuống để đọc tiếp. Kéo lên kéo xuống
-              thoải mái mà không lo bị tràn ra khỏi thẻ trắng. Thêm chữ vào đây
-              để test tính năng trượt dọc nhé!
-            </div>
-
-            {/* <!-- Icon 5 sao cố định ở đáy thẻ --> */}
-            <div class="text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-          </div>
-
-          {/* <!-- THẺ REVIEW 2 (Nằm cạnh bên và cứ thế tràn thẳng ra rìa màn hình) --> */}
-          <div class="w-72 h-64 bg-white rounded-2xl p-6 flex flex-col justify-between shadow-lg">
-            <div class="flex items-center gap-3 mb-3">
-              <img
-                class="w-10 h-10 rounded-full"
-                src="avatar2.jpg"
-                alt="User"
-              />
-              <span class="font-bold text-gray-800 text-sm">Trần Văn Nam</span>
-            </div>
-            <div class="h-28 overflow-y-auto pr-1 text-gray-600 text-xs leading-relaxed mb-3">
-              Nội dung ngắn thì hiển thị bình thường, nội dung dài thì tự động
-              lướt lên xuống được luôn.
-            </div>
-            <div class="text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-          </div>
-          {/* <!-- THẺ REVIEW 2 (Nằm cạnh bên và cứ thế tràn thẳng ra rìa màn hình) --> */}
-          <div class="w-72 h-64 bg-white rounded-2xl p-6 flex flex-col justify-between shadow-lg">
-            <div class="flex items-center gap-3 mb-3">
-              <img
-                class="w-10 h-10 rounded-full"
-                src="avatar2.jpg"
-                alt="User"
-              />
-              <span class="font-bold text-gray-800 text-sm">Trần Văn Nam</span>
-            </div>
-            <div class="h-28 overflow-y-auto pr-1 text-gray-600 text-xs leading-relaxed mb-3">
-              Nội dung ngắn thì hiển thị bình thường, nội dung dài thì tự động
-              lướt lên xuống được luôn.
-            </div>
-            <div class="text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

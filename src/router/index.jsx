@@ -11,6 +11,7 @@ import produceData from "../data/Produce.json";
 import Produce from "../pages/Produce";
 import Chsimple from "../on/custom_hook/Chsimple";
 import Test from "../pages/Test";
+import Test2 from "../pages/Test2";
 
 import Cart from "../pages/Cart";
 import CartDetail from "../pages/CartDetail";
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
       {
         path: "test",
         element: <Test />,
+      },
+      {
+        path: "test2",
+        element: <Test2 />,
       },
       {
         path: "users",

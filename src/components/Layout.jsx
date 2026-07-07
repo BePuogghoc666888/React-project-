@@ -8,7 +8,7 @@ export default function Layout() {
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col antialiased">
+    <div className="min-h-screen overflow-hidden bg-gray-50 flex flex-col antialiased">
       {/* Header / Navbar */}
       <header className="bg-white shadow-xs border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
@@ -44,7 +44,7 @@ export default function Layout() {
       </header>
 
       {/* Vùng nội dung chính */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto p-4 md:p-6">
         <Outlet />
       </main>
     </div>

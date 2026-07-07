@@ -1,0 +1,61 @@
+{
+  "listData": [
+    {
+      "id": "item-1",
+      "title": "Tiêu đề Item 1",
+      "content": "Nội dung chi tiết của item số 1."
+    },
+    {
+      "id": "item-2",
+      "title": "Tiêu đề Item 2",
+      "content": "Nội dung chi tiết của item số 2."
+    },
+    {
+      "id": "item-3",
+      "title": "Tiêu đề Item 3",
+      "content": "Nội dung chi tiết của item số 3. Nội dung dài..."
+    }
+  ],
+  "nvien": [
+    {
+      "id": "01",
+      "avt": "https://api.dicebear.com/7.x/avataaars/svg?seed=A",
+      "name": "Lê Thảo Nhi",
+      "major": "Travel Blogger",
+      "contentCV": "SIM Local giúp tôi kết nối dễ dàng khi đi du lịch nước ngoài. Dịch vụ nhanh chóng, tiện lợi, phủ sóng rộng.",
+      "start": 5
+    },
+    {
+      "id": "02",
+      "avt": "https://api.dicebear.com/7.x/avataaars/svg?seed=B",
+      "name": "Trần Văn Nam",
+      "major": "Kỹ sư phần mềm",
+      "contentCV": "With SIM Local, tôi không còn phải lo lắng về việc chuyển đổi SIM hay chi phí roaming đắt đỏ mỗi khi đến một quốc gia mới. SIM Local cung cấp nhiều gói cước linh hoạt...",
+      "start": 5
+    },
+    {
+      "id": "03",
+      "avt": "https://api.dicebear.com/7.x/avataaars/svg?seed=C",
+      "name": "Đặng Hoàng Minh",
+      "major": "Hướng dẫn viên du lịch",
+      "contentCV": "SIM Local là người bạn đồng hành không thể thiếu trong mỗi chuyến đi của tôi. Rất tiện lợi và đáng tin cậy.",
+      "start": 5
+    },
+    {
+      "id": "04",
+      "avt": "https://api.dicebear.com/7.x/avataaars/svg?seed=B",
+      "name": "Trần Văn Nam",
+      "major": "Kỹ sư phần mềm",
+      "contentCV": "With SIM Local, tôi không còn phải lo lắng về việc chuyển đổi SIM hay chi phí roaming đắt đỏ mỗi khi đến một quốc gia mới. SIM Local cung cấp nhiều gói cước linh hoạt...",
+      "start": 5
+    },
+    {
+      "id": "05",
+      "avt": "https://api.dicebear.com/7.x/avataaars/svg?seed=C",
+      "name": "Đặng Hoàng Minh",
+      "major": "Hướng dẫn viên du lịch",
+      "contentCV": "SIM Local là người bạn đồng hành không thể thiếu trong mỗi chuyến đi của tôi. Rất tiện lợi và đáng tin cậy.",
+      "start": 5
+    }
+  ]
+}
