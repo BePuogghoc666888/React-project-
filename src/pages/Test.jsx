@@ -2,6 +2,9 @@ import React, { useState, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import { useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 
 import "swiper/css";
 import "swiper/css/pagination";
@@ -9,6 +12,70 @@ import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import PhoneMockup from "../on/PhoneMockup";
 import fullData from "../data/test.json";
 // import section from "../pages/section";
+import { useNotificationStore } from "../on/state/useNotificationStore";
+
+const ImageUploadSection = ({ watchDisplayType, watchImage, setValue }) => {
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const processFile = (file) => {
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onloadend = () => setValue("image", reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div
+      className={`flex flex-col text-left h-full transition-opacity duration-300 ${watchDisplayType === "text_only" ? "opacity-30 pointer-events-none" : "opacity-100"}`}
+    >
+      <label className="text-sm font-normal text-gray-900 mb-1">
+        Hình ảnh *
+      </label>
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsDragActive(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragActive(false);
+          processFile(e.dataTransfer.files?.[0]);
+        }}
+        className={`flex-1 border border-dashed rounded-xl bg-white flex flex-col items-center justify-center p-4 cursor-pointer transition-all duration-200 ${isDragActive ? "border-red-500 bg-red-50/40 scale-[0.99]" : "border-gray-200 hover:border-gray-400"}`}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => processFile(e.target.files?.[0])}
+        />
+        {watchImage ? (
+          <img
+            src={watchImage}
+            alt="Preview"
+            className="max-h-[140px] object-contain mx-auto rounded-lg"
+          />
+        ) : (
+          <div className="flex flex-col items-center text-center pointer-events-none">
+            <p className="text-sm text-gray-400 m-0">
+              {isDragActive
+                ? "Thả file vào đây ngay!"
+                : "Chọn tệp hoặc kéo thả vào đây"}
+            </p>
+            <span className="mt-3 px-4 py-1.5 bg-red-500 text-white rounded-full text-xs font-medium shadow-sm inline-block">
+              Tải tệp lên
+            </span>
+          </div>
+        )}
+      </label>
+    </div>
+  );
+};
 
 const Test = () => {
   const [openId, setOpenId] = useState(null);
@@ -17,22 +84,21 @@ const Test = () => {
 
   const [activeIndex, setActiveIndex] = useState(0); // Lưu vị trí slide đang hiển thị
 
-  const handleResetForm = () => resizeTo();
-  // btn, xoá, chỉnh sửa, gửi thông báo (chưa cần)
-  // đang soạn, đã xoá, gần nhất ( khi nhấn vào sẽ trả về cái gần nhất, đọc hiểu k code )
-  // kiểu hiển thị, boolaen 
-  // nội dung, B T i U trái giữa phải 
-  // hình ảnh 
-  // btn, nút hàng động, selection, xem chi tiết 
-  // link điều hướng, giữ nguyên
-  // chọn đối tượng, 4 d.tượng 
+  // Cấu hình toolbar mới cho ReactQuill
+  const quillModules = {
+    toolbar: [
+      ["bold", "italic", "underline", "strike"], // toggled buttons
+    ],
+  };
 
   // Khởi tạo React Hook Form với các giá trị mặc định giống như ảnh thiết kế
-  const { register, handleSubmit, watch } = useForm({
+  const { register, handleSubmit, watch, control, reset, setValue } = useForm({
     defaultValues: {
       displayType: "all",
       title: "Chương trình khuyến mãi tháng 6/2026",
       content: `Chương trình khuyến mãi tháng 6 năm 2026 đã chính thức bắt đầu! Chúng tôi rất vui mừng thông báo rằng tất cả các sản phẩm trong cửa hàng sẽ được giảm giá 20%, bao gồm cả những mẫu mới nhất vừa ra mắt.\n\n💖 Đây là cơ hội tuyệt vời để bạn sở hữu những sản phẩm yêu thích với mức giá ưu đãi. Đặc biệt, nếu...`,
+      image: "",
+      hasAction: true, // Biến boolean bắt buộc phải có cho checkbox
       actionBtn: "Xem chi tiết",
       redirectLink: "mylocal.vn",
     },
@@ -42,171 +108,96 @@ const Test = () => {
   const watchType = watch("displayType");
   const watchTitle = watch("title");
   const watchContent = watch("content");
+  const watchImage = watch("image"); // Lắng nghe thêm biến image để preview real-time
   const watchActionBtn = watch("actionBtn");
   const watchRedirectLink = watch("redirectLink");
+  const watchHasAction = watch("hasAction"); 
 
   const onSubmit = (data) =>
     console.log("Dữ liệu gửi lên dữ liệu hệ thống:", data);
 
+  // Lấy các hàm xử lý dữ liệu từ Zustand Store đã import
+  const { saveNotification, loadLatest } = useNotificationStore();
+
+  // CHỨC NĂNG 1: Nút Xóa (Clear Form về trạng thái trống rỗng)
+  const handleClearForm = () => {
+    reset({
+      displayType: "all",
+      title: "",
+      content: "",
+      image: "",
+      hasAction: false,
+      actionBtn: "",
+      redirectLink: "",
+    });
+  };
+
+  // CHỨC NĂNG 2: Nút Chỉnh sửa (Đọc hiểu logic: Kích hoạt chế độ chỉnh sửa)
+  const handleEdit = () => {
+    console.log(
+      "Hệ thống mở khóa các ô Input để bắt đầu chỉnh sửa bản ghi này.",
+    );
+  };
+
+  // CHỨC NĂNG 3: Nhóm trạng thái (Đang soạn, Đã xóa, Gần nhất)
+  const handleFilterStatus = (statusType) => {
+    console.log(`Lọc danh sách hệ thống theo trạng thái: ${statusType}`);
+    // Đọc hiểu: Khi click vào trạng thái nào (Ví dụ: "Đang soạn", "Đã xóa"), UI danh sách sẽ lọc bản ghi tương ứng
+  };
+
+  // CHỨC NĂNG 4: Nhấn nút "Gần nhất" (Gọi hàm từ Zustand Store để đổ ngược data vào Form)
+  const handleGetLatest = () => {
+    loadLatest(); // Hàm này chạy xong sẽ cập nhật dữ liệu mới nhất vào Zustand
+  };
+
   return (
     <>
-      <div className=" max-w-7xl mx-auto p-6  space-y-12">
-        {/* SECTION 1: ACCORDION (ẨN HIỆN) */}
-        <div className="space-y-4">
-          {fullData.listData.map((item) => {
-            const isOpen = openId === item.id;
-            return (
-              <div
-                key={item.id}
-                className={`rounded-xl border transition-all duration-300 overflow-hidden ${
-                  isOpen ? "border-red-500 shadow-sm" : "border-gray-200"
-                }`}
-              >
-                <button
-                  onClick={() => setOpenId(isOpen ? null : item.id)}
-                  className={`w-full p-6 text-left flex items-center justify-between cursor-pointer ${
-                    isOpen ? "bg-[#F6F7FA]" : "bg-white"
-                  }`}
-                >
-                  <div className="text-base font-semibold text-gray-800">
-                    {item.title}
-                  </div>
-                  <div className="text-gray-500 text-sm flex items-center justify-center w-5 h-5">
-                    {isOpen ? <MinusOutlined /> : <PlusOutlined />}
-                  </div>
-                </button>
-
-                <div
-                  className={`grid transition-all duration-300 ease-out ${
-                    isOpen
-                      ? "grid-rows-[1fr] opacity-100"
-                      : "grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <div className="px-6 pb-6 text-gray-700">
-                      <p className="text-sm leading-relaxed text-gray-500">
-                        <strong className="text-red-500 font-bold">
-                          Phần in đậm quan trọng: {item.content}
-                        </strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div
-          className="bg-[#2A72F4] rounded-[32px] p-8 md:p-12 flex flex-col 
-            lg:flex-row gap-8 items-center overflow-visible  relative
-            w-full max-w-[1320px]  mx-auto min-h-[727px]
-          "
-        >
-          <div className=" lg:w-[20%] flex flex-col justify-between text-white ">
-            <div className="space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold  leading-tight">
-                Khách hàng nói về Local Travel
-              </h2>
-              <p className="text-white/80 text-dm leading-relaxed">
-                Xem thử những chia sẻ chân thật nhất từ khách hàng đã trải
-                nghiệm Local Travel!
-              </p>
-            </div>
-
-            <div className="mt-6 w-32 h-32 relative">
-              <div className="absolute inset-0 bg-white/10 rounded-2xl flex items-center justify-center text-4xl">
-                ⭐⭐⭐
-              </div>
-            </div>
+      {/*  */}
+      <div className=" max-w-7xl mx-auto bg-amber-200 p-6 space-y-12">
+        <div className="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-4 w-full shadow-sm">
+          {/* Khối bên trái: Tiêu đề và Trạng thái */}
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-bold text-gray-700 tracking-wide">
+              CHI TIẾT THÔNG BÁO
+            </h2>
+            <span className="px-2 py-0.5 text-[10px] font-semibold text-purple-600 bg-purple-50 rounded-md border border-purple-100">
+              Đang soạn
+            </span>
           </div>
 
-          <div className="flex-1 w-full overflow-hidden -mr-[9999px] pr-[9999px] ">
-            <div className=" w-[220px] flex flex-row gap-6 pb-4 overflow-visible ">
-              <Swiper
-                spaceBetween={24}
-                slidesPerView="auto"
-                modules={[Pagination]}
-                onBeforeInit={(swiper) => {
-                  swiperRef.current = swiper;
-                }} // lưu quyền điều khiển
-                onSlideChange={(swiper) => {
-                  setActiveIndex(swiper.activeIndex);
-                }} // cập nhật vị trí slide mới
-                className="w-full  !overflow-visible"
-              >
-                {fullData.nvien.map((nv) => (
-                  <SwiperSlide key={nv.id} className="flex !w-[240px] ">
-                    <div className=" bg-amber-200 rounded-2xl p-6 flex flex-col  ">
-                      <div>
-                        <div className="flex items-center gap-1 mb-2">
-                          <div>
-                            <p className="font-bold text-gray-900 text-[10px]  ">
-                              {nv.name}
-                            </p>
-                            <p className="text-[10px] text-gray-400 font-medium">
-                              {nv.major}
-                            </p>
-                          </div>
-                        </div>
+          {/* Khối bên phải: Cụm 3 nút hành động */}
+          <div className="flex items-center gap-2">
+            {/* Nút Xóa */}
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="px-3 py-1.5 text-[11px] font-medium border border-gray-200 text-gray-500 bg-white hover:bg-gray-50 rounded-lg transition"
+            >
+              Xóa
+            </button>
 
-                        <div className=" h-[80px] w-[160px] overflow-x-auto scrollbar-none text-gray-600 text-xs mb-2 ">
-                          {nv.contentCV}
-                        </div>
-                      </div>
+            {/* Nút Chỉnh sửa */}
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="px-3 py-1.5 text-[11px] font-medium border border-red-200 text-red-500 bg-white hover:bg-red-50 rounded-lg transition"
+            >
+              Chỉnh sửa
+            </button>
 
-                      <div className="flex gap-1 text-amber-400 text-base">
-                        {Array.from({ length: Number(nv.start) }).map(
-                          (_, index) => (
-                            <span key={index}>★</span>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            </div>
-          </div>
-
-          <div className="absolute bottom-1 right-8 flex flex-row flex-wrap items-center gap-6">
-            <div className="absolute bottom-6 right-8 flex justify-between flex-row items-center gap-6 z-10">
-              <div className="flex gap-1.5 ">
-                {fullData.nvien.map((item, index) => {
-                  const isActive = activeIndex === index;
-                  return (
-                    <span
-                      key={item.id}
-                      onClick={() => swiperRef.current?.slideTo(index)}
-                      className={`     rounded-full bg-white transition-all duration-300 ${
-                        isActive ? "w-4" : "w-1.5 bg-white/40"
-                      } h-1.5`}
-                    ></span>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => swiperRef.current?.slidePrev()}
-                  className="w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-colors text-sm"
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => swiperRef.current?.slideNext()}
-                  className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 text-[#2A72F4] flex items-center justify-center transition-colors shadow text-sm font-bold"
-                >
-                  →
-                </button>
-              </div>
-            </div>
+            {/* Nút Gửi thông báo */}
+            <button
+              type="submit"
+              className="px-3 py-1.5 text-[11px] font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition shadow-sm"
+            >
+              Gửi thông báo
+            </button>
           </div>
         </div>
-
-        <div className="w-full max-w-[1320px] min-h-[727px] mx-auto min-h-screen bg-gray-100 p-2 md:p-6 flex flex-col gap-6">
-          <h2 className="text-xl font-bold text-gray-800">Kênh hiển thị</h2>
+        <div className="w-full max-w-[1320px] min-h-[727px] rounded-xl mx-auto min-h-screen bg-gray-100 p-2 md:p-6 flex flex-col gap-6">
+          <h2 className="text-xl text-left font-bold text-gray-800">
+            Kênh hiển thị
+          </h2>
 
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -216,18 +207,20 @@ const Test = () => {
             <div className="w-full flex-1 flex flex-col lg:flex-row gap-6 bg-white p-6 rounded-xl border">
               {/* BÊN TRÁI: Khung chứa 2 điện thoại xem trước */}
               <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-bold text-gray-800">
+                <h3 className="text-sm text-left font-bold text-gray-800">
                   Bản xem trước
                 </h3>
 
                 {/* Điều chỉnh độ rộng w-[380px] để chứa vừa vặn 2 điện thoại nằm ngang thoải mái */}
-                <div className="w-[380px] h-[518px] bg-white border border-blue-400 rounded-lg p-4 flex items-center justify-center shrink-0">
+                <div className="w-[380px] h-[492px] bg-white border border-blue-400 rounded-lg p-4 flex items-center justify-center shrink-0">
                   <div className="flex gap-3 justify-center items-center w-full">
                     {/* Điện thoại 1 - Xem trước ngoài màn hình khóa */}
                     <PhoneMockup
                       device="iphone-16"
                       title={watchTitle}
                       content={watchContent}
+                      displayType={watchType === 'type2'} // 
+
                     />
 
                     {/* Điện thoại 2 - Xem trước chi tiết trong ứng dụng (Nhận thêm text nút hành động và loại hiển thị) */}
@@ -237,17 +230,17 @@ const Test = () => {
                       title={watchTitle}
                       content={watchContent}
                       actionText={watchActionBtn}
-                      displayType={watchType}
-                      hasAction={true}
+                      imageUrl={watchImage}
+                      displayType={watchType === 'type2'} // 
+                      hasAction={watchHasAction}
                     />
                   </div>
                 </div>
               </div>
 
               {/* BÊN PHẢI: Khối cấu hình điền nội dung */}
-              <div className="flex-1 flex flex-col gap-4">
-                {/* Header cài đặt */}
-                <div className="flex justify-between items-center w-full">
+              <div className="flex-1 flex flex-col gap-4 ">
+                {/* <div className="flex justify-between items-center w-full">
                   <h3 className="text-sm font-bold text-gray-800">
                     Cài đặt nội dung
                   </h3>
@@ -265,7 +258,7 @@ const Test = () => {
                       Sao chép nội dung
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Kiểu hiển thị (Radio Buttons) */}
                 <div className="flex flex-col gap-1.5">
@@ -279,6 +272,7 @@ const Test = () => {
                       <input
                         type="radio"
                         value="type1"
+                        defaultChecked
                         {...register("displayType")}
                         className="accent-red-500"
                       />
@@ -288,6 +282,7 @@ const Test = () => {
                         Nội dung & Hình ảnh
                       </span>
                     </label>
+
                     <label
                       className={`border rounded-xl p-3 flex items-center gap-2 cursor-pointer transition-all ${watchType === "type2" ? "border-red-400 bg-white" : "border-gray-200 bg-gray-50/50"}`}
                     >
@@ -315,97 +310,227 @@ const Test = () => {
                     type="text"
                     {...register("title")}
                     placeholder="Nhập tiêu đề..."
-                    className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
+                    className="w-full border border-gray-200 rounded-xl p-2.5 text-sm bg-gray-50 outline-none focus:border-red-400 shadow-sm"
                   />
                 </div>
 
-                {/* Ô soạn thảo Nội dung & Khung tải ảnh */}
-                <div className="grid grid-cols-2 gap-4 h-[240px]">
-                  <div className="flex flex-col h-full">
-                    <label className="text-xs font-semibold text-gray-700 mb-1 text-left">
-                      Nội dung *
-                    </label>
-                    <textarea
-                      {...register("content")}
-                      placeholder="Nhập nội dung thông báo tại đây..."
-                      className="w-full h-full border rounded-lg p-3 bg-white shadow-sm text-xs text-gray-700 resize-none outline-none focus:border-red-400"
-                    />
-                  </div>
+                <div className="p-6">
+                  {/* // */}
+                  <div className="grid grid-cols-2 gap-4 h-[240px] ">
+                    {/* CỘT TRÁI: TEXT EDITOR */}
+                    <div className="flex flex-col text-left h-full min-h-0">
+                      <label className="text-sm font-normal text-gray-900 mb-1">
+                        Nội dung *
+                      </label>
+                      <div className="flex-1 rounded-xl border border-gray-200 shadow-sm flex flex-col bg-white overflow-hidden">
+                        <Controller
+                          name="content"
+                          control={control}
+                          render={({ field }) => (
+                            <ReactQuill
+                              theme="snow"
+                              value={field.value}
+                              onChange={field.onChange}
+                              modules={quillModules}
+                              placeholder="Nhập nội dung thông báo tại đây..."
+                              className="flex-1 flex flex-col overflow-hidden [&_.ql-container]:overflow-y-auto [&_.ql-container]:flex-1 [&_.ql-container::-webkit-scrollbar]:hidden [&_.ql-container]:[scrollbar-width:none] [&_.ql-container]:[-ms-overflow-style:none]"
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
 
-                  {/* Tải hình ảnh (Sẽ ẩn mờ đi hoặc ẩn hẳn nếu chọn chế độ "Chỉ nội dung") */}
-                  <div className="flex flex-col h-full transition-opacity duration-300">
-                    <label className="text-xs  text-left font-semibold text-gray-700 mb-1">
-                      Hình ảnh *
-                    </label>
-                    <div
-                      className={`w-full h-full border border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center p-4 text-center ${watchType === "type2" ? "bg-gray-100 opacity-50 pointer-events-none" : "bg-white"}`}
+                    {/* CỘT PHẢI: KHUNG TẢI ẢNH - Thêm class khóa chức năng khi là type2 */}
+                    <div 
+                      className={`h-full transition-all duration-300 ${
+                        watchType === "type2" 
+                          ? "pointer-events-none opacity-40 select-none brightness-95" 
+                          : ""
+                      }`}
                     >
-                      <span className="text-xs text-gray-400">
-                        Chọn tệp hoặc kéo thả vào đây
-                      </span>
-                      <button
-                        type="button"
-                        className="mt-2 px-4 py-1.5 bg-red-500 text-white rounded-full text-xs font-medium shadow-sm"
-                      >
-                        Tải tệp lên
-                      </button>
+                      <ImageUploadSection
+                        watchDisplayType={watchType}
+                        watchImage={watchImage}
+                        setValue={setValue}
+                        isDisabled={watchType === "type2"}  
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Khu vực cấu hình Nút hành động & Link điều hướng */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col">
-                    <button className="radio"></button>
-                    <label className="text-xs font-semibold text-gray-700  text-left mb-1">
-                      Nút hành động
+                  {/* CỘT 1: CẤU HÌNH NÚT HÀNH ĐỘNG */}
+                  <div className="flex flex-col gap-2">
+                    {/* Hàng chứa Nút gạt Toggle và Nhãn */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          {...register("hasAction")}
+                          className="sr-only peer"
+                        />
+                        {/* Thanh nền của nút gạt */}
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">
+                        Nút hành động
+                      </span>
                     </label>
-                    <input
-                      type="text"
-                      {...register("actionBtn")}
-                      placeholder="Ví dụ: Xem chi tiết, Nhận quà..."
-                      className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
-                    />
+
+                    {/* Thanh select lựa chọn hành động */}
+                    {watch("hasAction") && ( 
+                      <div className="relative w-full">
+                        <select
+                          {...register("actionBtn") }
+                          className="w-full border border-gray-200 rounded-xl p-2.5 text-xs text-gray-500 bg-white outline-none appearance-none pr-8 shadow-sm"
+                        >
+                          <option value="Xem chi tiết">Xem chi tiết</option>
+                          <option value="Mua ngay">Mua ngay</option>
+                          <option value="Đăng ký">Đăng ký</option>
+                        </select>
+                        {/* Icon mũi tên xuống ở góc phải */}
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                          <svg
+                            className="fill-current h-4 w-4"
+                            xmlns="http://w3.org"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col">
-                    <label className="text-xs font-semibold  text-left text-gray-700 mb-1">
-                      Link điều hướng
-                    </label>
+
+                  {/* CỘT 2: LINK ĐIỀU HƯỚNG */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center h-5">
+                      <label className="text-xs font-semibold text-gray-700">
+                        Link điều hướng
+                      </label>
+                    </div>
                     <input
                       type="text"
                       {...register("redirectLink")}
-                      placeholder="Nhập đường dẫn liên kết (Ví dụ: )..."
-                      className="w-full border rounded-lg p-2 text-xs bg-gray-50 outline-none focus:border-red-400"
+                      placeholder="mylocal.vn"
+                      className="w-full border border-gray-200 rounded-xl p-2.5 text-xs bg-white outline-none focus:border-red-400 shadow-sm"
                     />
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* FOOTER: Nút điều hướng biểu mẫu */}
-            <div className="w-full border-t pt-3 flex justify-between items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+          </form>
+          {/* FOOTER: Nút điều hướng biểu mẫu */}
+          <div className="w-full border pt-3 flex justify-between items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600 bg-gray-50"
+            >
+              Quay lại
+            </button>
+            <div className="flex gap-2">
               <button
                 type="button"
-                className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600 bg-gray-50"
+                className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600"
               >
-                Quay lại
+                Lưu nháp
               </button>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 border rounded-lg text-xs font-medium text-gray-600"
-                >
-                  Lưu nháp
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-medium shadow-sm"
-                >
-                  Tiếp theo &rarr;
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-medium shadow-sm"
+              >
+                Tiếp theo &rarr;
+              </button>
             </div>
-          </form>
+          </div>
+          <div className="bg-amber-50 p-6 rounded-xl border border-gray-100 max-w-6xl">
+            {/* Tiêu đề vùng chọn */}
+            <div className="mb-4 text-left">
+              <h2 className="text-base font-bold text-gray-900">
+                Đối tượng nhận thông báo
+              </h2>
+              <span className="text-xs text-gray-500 mt-1 block">
+                Chọn đối tượng
+              </span>
+            </div>
+
+            {/* Lưới danh sách lựa chọn */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option 1: Tất cả người dùng */}
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-blue-500 bg-blue-50/30 cursor-pointer transition hover:bg-blue-50/50 text-left">
+                <input
+                  type="radio"
+                  name="target_type"
+                  value="all"
+                  defaultChecked
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-semibold text-gray-800">
+                    Tất cả người dùng LCS App
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Gửi đến toàn bộ người dùng app
+                  </span>
+                </div>
+              </label>
+
+              {/* Option 2: Chọn theo vai trò */}
+              <label className="flex items-start gap-3 p-4 rounded-xl  border border-gray-200 bg-gray-50/30 cursor-pointer transition hover:bg-gray-100/50 text-left">
+                <input
+                  type="radio"
+                  name="target_type"
+                  value="role"
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-semibold text-gray-800">
+                    Chọn theo vai trò
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Bao gồm: LCS NPP/ LCS ASIM/ Saleman
+                  </span>
+                </div>
+              </label>
+
+              {/* Option 3: Chọn thủ công */}
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50/30 cursor-pointer transition hover:bg-gray-100/50 text-left">
+                <input
+                  type="radio"
+                  name="target_type"
+                  value="manual"
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-semibold text-gray-800">
+                    Chọn thủ công
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Tìm kiếm và tích chọn từng người dùng LocalShop
+                  </span>
+                </div>
+              </label>
+
+              {/* Option 4: Import File */}
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50/30 cursor-pointer transition hover:bg-gray-100/50 text-left">
+                <input
+                  type="radio"
+                  name="target_type"
+                  value="import"
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-semibold text-gray-800">
+                    Import File
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Tải lên file Excel (.xlsx) danh sách người dùng app
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </>

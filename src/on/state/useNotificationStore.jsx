@@ -22,4 +22,19 @@ export const useNotificationStore = create((set, get) => ({
   }
 }));
 
- 
+  // btn, xoá, chỉnh sửa, gửi thông báo (chưa cần)
+ // dùng zustand
+// đang soạn, đã xoá, gần nhất ( khi nhấn vào sẽ trả về cái gần nhất, đọc hiểu k code )
+
+   // kiểu hiển thị, boolaen
+   // nội dung, B T i U trái giữa phải
+ // thư viện ..   
+   // hình ảnh
+ //   
+   // btn, nút hàng động, selection, xem chi tiết
+ // 
+   // link điều hướng, giữ nguyên
+   // chọn đối tượng, 4 d.tượng
+
+
+
